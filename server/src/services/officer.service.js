@@ -94,16 +94,58 @@ export const transferOfficer = async (officerId, destinationStationId) => {
   return officer;
 };
 
-export const updateOfficerLocation = async (officerUserId, latitude, longitude) => {
+export const isOfficerLocationFresh = (officer, freshnessMinutes = 10) => {
+  if (!officer?.currentLocation?.latitude || !officer?.currentLocation?.longitude || !officer?.lastLocationUpdate) {
+    return false;
+  }
+  const maxAgeMs = freshnessMinutes * 60 * 1000;
+  const ageMs = Date.now() - new Date(officer.lastLocationUpdate).getTime();
+  return ageMs >= 0 && ageMs <= maxAgeMs;
+};
+
+export const updateOfficerLocation = async (officerUserId, latitude, longitude, isSimulated = false) => {
+  const lat = Number(latitude);
+  const lng = Number(longitude);
+
+  if (isNaN(lat) || lat < -90 || lat > 90) {
+    throw new ApiError(400, 'Invalid latitude. Must be a number between -90 and 90.');
+  }
+  if (isNaN(lng) || lng < -180 || lng > 180) {
+    throw new ApiError(400, 'Invalid longitude. Must be a number between -180 and 180.');
+  }
+
+  const officer = await PoliceOfficer.findOne({ userId: officerUserId });
+  if (!officer) {
+    throw new ApiError(404, 'Officer profile not found for this user');
+  }
+  
+  officer.currentLocation = { 
+    latitude: lat, 
+    longitude: lng,
+    isSimulated: Boolean(isSimulated)
+  };
+  officer.lastLocationUpdate = new Date();
+  await officer.save();
+
+  const populated = await PoliceOfficer.findById(officer._id)
+    .populate({
+      path: 'userId',
+      select: 'name email phone status avatar'
+    })
+    .populate('stationId', 'name stationCode address location phone');
+  
+  return populated;
+};
+
+export const clearOfficerLocation = async (officerUserId) => {
   const officer = await PoliceOfficer.findOne({ userId: officerUserId });
   if (!officer) {
     throw new ApiError(404, 'Officer profile not found');
   }
   
-  officer.currentLocation = { latitude, longitude };
-  officer.lastLocationUpdate = new Date();
+  officer.currentLocation = { latitude: null, longitude: null, isSimulated: false };
+  officer.lastLocationUpdate = null;
   await officer.save();
-  
   return officer;
 };
 

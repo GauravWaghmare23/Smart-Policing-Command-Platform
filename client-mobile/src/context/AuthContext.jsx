@@ -11,6 +11,22 @@ import { setUnauthorizedHandler } from '../services/apiClient';
 
 const AuthContext = createContext(null);
 
+import {
+  startOfficerLocationTracking,
+  stopOfficerLocationTracking,
+} from '../services/officerLocation.service';
+
+const isOfficerRole = (role) => {
+  if (!role) return false;
+  const r = role.toUpperCase();
+  return (
+    r === 'FIELD_OFFICER' ||
+    r === 'STATION_HEAD' ||
+    r === 'INVESTIGATING_OFFICER' ||
+    r === 'POLICE'
+  );
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
@@ -18,6 +34,7 @@ export const AuthProvider = ({ children }) => {
 
   const clearSession = async () => {
     try {
+      await stopOfficerLocationTracking();
       await removeStoredToken();
     } catch (_) {}
     setUser(null);
@@ -47,10 +64,11 @@ export const AuthProvider = ({ children }) => {
         const meRes = await fetchCurrentUser();
         const currentUser = extractUser(meRes);
 
-        if (currentUser && currentUser.role && currentUser.role.toLowerCase() !== 'citizen') {
-          await clearSession();
-        } else if (currentUser && currentUser.email) {
+        if (currentUser && currentUser.email) {
           setUser(currentUser);
+          if (isOfficerRole(currentUser.role)) {
+            startOfficerLocationTracking();
+          }
         } else {
           await clearSession();
         }
@@ -79,18 +97,15 @@ export const AuthProvider = ({ children }) => {
     const meRes = await fetchCurrentUser();
     const currentUser = extractUser(meRes);
 
-    if (currentUser && currentUser.role && currentUser.role.toLowerCase() !== 'citizen') {
-      await clearSession();
-      throw new Error('This application is intended for citizens.');
-    }
-
     setUser(currentUser);
+    if (isOfficerRole(currentUser?.role)) {
+      startOfficerLocationTracking();
+    }
     return currentUser;
   };
 
   const register = async (registerData) => {
     const regRes = await registerUser(registerData);
-    // After registration, log in directly or fetch user if token returned
     const token = extractToken(regRes);
 
     if (token) {
@@ -101,7 +116,6 @@ export const AuthProvider = ({ children }) => {
       setUser(currentUser);
       return currentUser;
     } else {
-      // Login with credentials
       return await login(registerData.email, registerData.password);
     }
   };

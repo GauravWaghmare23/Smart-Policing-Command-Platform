@@ -50,8 +50,17 @@ export const updateStatus = asyncHandler(async (req, res) => {
   if (!status) {
     throw new ApiError(400, 'status is required');
   }
-  const patrol = await patrolService.updatePatrolStatus(req.params.id, status);
+  const patrol = await patrolService.updatePatrolStatus(req.params.id, status, req.user);
   return ApiResponse(res, 200, 'Patrol status updated successfully', { patrol });
+});
+
+export const addBreadcrumb = asyncHandler(async (req, res) => {
+  const { latitude, longitude, accuracy } = req.body;
+  if (latitude == null || longitude == null) {
+    throw new ApiError(400, 'latitude and longitude are required');
+  }
+  const result = await patrolService.addPatrolBreadcrumb(req.params.id, { latitude, longitude, accuracy });
+  return ApiResponse(res, 200, 'Patrol location tracked successfully', result);
 });
 
 export const getRouteDirections = asyncHandler(async (req, res) => {

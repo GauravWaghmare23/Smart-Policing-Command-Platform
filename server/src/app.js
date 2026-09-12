@@ -3,7 +3,11 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import mongoose from 'mongoose';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { env } from './config/env.js';
+import { checkRedisAvailable } from './config/redis.js';
+import { checkRabbitAvailable } from './config/rabbitmq.js';
 
 // Middlewares
 import { errorMiddleware } from './middleware/error.middleware.js';
@@ -29,15 +33,33 @@ import auditLogRoutes from './routes/auditLog.routes.js';
 
 const app = express();
 
+// Security headers
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
+}));
+
+// Rate limiting (600 requests per 15 minutes)
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 600,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many requests from this IP. Please try again later.'
+  }
+});
+app.use('/api', limiter);
+
 // Standard middlewares
 app.use(
   cors({
-    origin: [env.clientUrl, 'http://localhost:5174', 'http://localhost:3000'],
+    origin: [env.clientUrl, 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000', 'http://127.0.0.1:5173'],
     credentials: true
   })
 );
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 if (env.nodeEnv === 'development') {
@@ -58,6 +80,8 @@ app.get('/api/health', (req, res) => {
     data: {
       status: 'UP',
       database: dbStatus,
+      redis: checkRedisAvailable() ? 'connected' : 'in-memory fallback',
+      rabbitmq: checkRabbitAvailable() ? 'connected' : 'synchronous fallback',
       timestamp: new Date(),
       uptime: process.uptime()
     }

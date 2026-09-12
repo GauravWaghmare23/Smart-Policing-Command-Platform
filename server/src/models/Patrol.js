@@ -13,7 +13,18 @@ const waypointSchema = new mongoose.Schema({
   longitude: {
     type: Number,
     required: true
+  },
+  reachedAt: {
+    type: Date,
+    default: null
   }
+});
+
+const breadcrumbSchema = new mongoose.Schema({
+  latitude: { type: Number, required: true },
+  longitude: { type: Number, required: true },
+  accuracy: { type: Number, default: 0 },
+  timestamp: { type: Date, default: Date.now }
 });
 
 const patrolSchema = new mongoose.Schema(
@@ -50,6 +61,29 @@ const patrolSchema = new mongoose.Schema(
         default: ''
       }
     },
+    actualPath: [breadcrumbSchema],
+    currentLocation: {
+      latitude: { type: Number, default: null },
+      longitude: { type: Number, default: null },
+      accuracy: { type: Number, default: null },
+      lastUpdate: { type: Date, default: null }
+    },
+    distanceTravelledKm: {
+      type: Number,
+      default: 0
+    },
+    progressPercent: {
+      type: Number,
+      default: 0
+    },
+    startTime: {
+      type: Date,
+      default: null
+    },
+    endTime: {
+      type: Date,
+      default: null
+    },
     priority: {
       type: String,
       enum: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'],
@@ -78,6 +112,9 @@ const patrolSchema = new mongoose.Schema(
     timestamps: true
   }
 );
+
+patrolSchema.index({ stationId: 1, status: 1 });
+patrolSchema.index({ officerIds: 1 });
 
 const Patrol = mongoose.model('Patrol', patrolSchema);
 export default Patrol;

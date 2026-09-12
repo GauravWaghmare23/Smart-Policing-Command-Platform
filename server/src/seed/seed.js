@@ -154,7 +154,7 @@ const seedData = async () => {
     // POLICE STATIONS
     // ========================================================
 
-    console.log('Seeding Nagpur Police Stations...');
+    console.log('Seeding Nagpur, Butibori & Regional Police Stations...');
 
     const stationsData = [
       {
@@ -167,7 +167,6 @@ const seedData = async () => {
           longitude: 79.08034
         }
       },
-
       {
         name: 'Ajni Police Station',
         stationCode: 'AJN-NGP',
@@ -178,7 +177,6 @@ const seedData = async () => {
           longitude: 79.09748
         }
       },
-
       {
         name: 'Ambazari Police Station',
         stationCode: 'AMB-NGP',
@@ -189,7 +187,6 @@ const seedData = async () => {
           longitude: 79.05538
         }
       },
-
       {
         name: 'Dhantoli Police Station',
         stationCode: 'DHA-NGP',
@@ -200,7 +197,6 @@ const seedData = async () => {
           longitude: 79.08536
         }
       },
-
       {
         name: 'Ganeshpeth Police Station',
         stationCode: 'GAN-NGP',
@@ -211,7 +207,6 @@ const seedData = async () => {
           longitude: 79.10080
         }
       },
-
       {
         name: 'Nandanvan Police Station',
         stationCode: 'NAN-NGP',
@@ -222,7 +217,6 @@ const seedData = async () => {
           longitude: 79.12206
         }
       },
-
       {
         name: 'Sadar Police Station',
         stationCode: 'SAD-NGP',
@@ -233,7 +227,6 @@ const seedData = async () => {
           longitude: 79.07954
         }
       },
-
       {
         name: 'Rana Pratap Nagar Police Station',
         stationCode: 'RPN-NGP',
@@ -244,7 +237,6 @@ const seedData = async () => {
           longitude: 79.03983
         }
       },
-
       {
         name: 'Lakadganj Police Station',
         stationCode: 'LAK-NGP',
@@ -253,6 +245,26 @@ const seedData = async () => {
         location: {
           latitude: 21.15406,
           longitude: 79.12104
+        }
+      },
+      {
+        name: 'Butibori Police Station',
+        stationCode: 'BUT-NGP',
+        address: 'MIDC Industrial Area, Butibori, Nagpur, Maharashtra',
+        phone: '07104-265100',
+        location: {
+          latitude: 20.9258,
+          longitude: 78.9942
+        }
+      },
+      {
+        name: 'Hingna Police Station',
+        stationCode: 'HIN-NGP',
+        address: 'Hingna Main Road (Takalghat Sector), Nagpur, Maharashtra',
+        phone: '07104-242033',
+        location: {
+          latitude: 21.0664,
+          longitude: 78.9723
         }
       }
     ];
@@ -300,20 +312,12 @@ const seedData = async () => {
         rank,
         role,
         dutyStatus,
-
         currentLocation: {
-          latitude: randomOffset(
-            station.location.latitude,
-            0.008
-          ),
-
-          longitude: randomOffset(
-            station.location.longitude,
-            0.008
-          )
+          latitude: null,
+          longitude: null,
+          isSimulated: false
         },
-
-        lastLocationUpdate: new Date()
+        lastLocationUpdate: null
       });
 
       return {
@@ -891,7 +895,9 @@ const seedData = async () => {
       'AJN-NGP',
       'GAN-NGP',
       'NAN-NGP',
-      'LAK-NGP'
+      'LAK-NGP',
+      'BUT-NGP',
+      'HIN-NGP'
     ];
 
 

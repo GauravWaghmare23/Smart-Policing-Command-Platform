@@ -47,6 +47,11 @@ export default function LoginScreen() {
     }
   };
 
+  const setDemoAccount = (demoEmail) => {
+    setEmail(demoEmail);
+    setPassword('password123');
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.flex}
@@ -63,12 +68,12 @@ export default function LoginScreen() {
             <Ionicons name="shield-checkmark" size={44} color="#1D4ED8" />
           </View>
           <Text style={styles.appName}>Smart Police Station</Text>
-          <Text style={styles.tagline}>Citizen Mobile Portal</Text>
+          <Text style={styles.tagline}>Citizen & Officer Mobile Portal</Text>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Citizen Sign In</Text>
-          <Text style={styles.cardSub}>Sign in to access citizen emergency services</Text>
+          <Text style={styles.cardTitle}>Sign In</Text>
+          <Text style={styles.cardSub}>Sign in for emergency SOS & live field operations</Text>
 
           <Input
             label="Email Address"
@@ -97,6 +102,34 @@ export default function LoginScreen() {
             style={styles.btn}
           />
 
+          {/* Quick Demo Fill Buttons */}
+          <View style={styles.demoSection}>
+            <Text style={styles.demoTitle}>DEMO QUICK LOGIN</Text>
+            <View style={styles.demoRow}>
+              <TouchableOpacity
+                style={styles.demoBtn}
+                onPress={() => setDemoAccount('ramesh.kumar@smartpolice.local')}
+              >
+                <Ionicons name="person" size={12} color="#1D4ED8" />
+                <Text style={styles.demoBtnText}>Citizen</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.demoBtn, styles.demoBtnOfficer]}
+                onPress={() => setDemoAccount('sitabuldi.field1@smartpolice.local')}
+              >
+                <Ionicons name="shield" size={12} color="#059669" />
+                <Text style={[styles.demoBtnText, { color: '#059669' }]}>Field Officer</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.demoBtn, styles.demoBtnHead]}
+                onPress={() => setDemoAccount('sitabuldi.head@smartpolice.local')}
+              >
+                <Ionicons name="star" size={12} color="#7C3AED" />
+                <Text style={[styles.demoBtnText, { color: '#7C3AED' }]}>Station Head</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
           <View style={styles.divider}>
             <View style={styles.line} />
             <Text style={styles.orText}>or</Text>
@@ -115,7 +148,7 @@ export default function LoginScreen() {
 
         <View style={styles.infoRow}>
           <Ionicons name="information-circle-outline" size={16} color="#64748B" />
-          <Text style={styles.infoText}> Only Citizen accounts can log into this application.</Text>
+          <Text style={styles.infoText}> Secure connection to Smart Police Command Network</Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -156,7 +189,25 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 20, fontWeight: '700', color: '#1E293B', marginBottom: 4 },
   cardSub: { fontSize: 13, color: '#64748B', marginBottom: 20 },
   btn: { marginTop: 8 },
-  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
+  demoSection: { marginTop: 18, paddingTop: 14, borderTopWidth: 1, borderTopColor: '#F1F5F9' },
+  demoTitle: { fontSize: 10, fontWeight: '800', color: '#94A3B8', letterSpacing: 1, marginBottom: 8, textAlign: 'center' },
+  demoRow: { flexDirection: 'row', gap: 6, justifyContent: 'space-between' },
+  demoBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#DBEAFE',
+  },
+  demoBtnOfficer: { backgroundColor: '#ECFDF5', borderColor: '#A7F3D0' },
+  demoBtnHead: { backgroundColor: '#F5F3FF', borderColor: '#DDD6FE' },
+  demoBtnText: { fontSize: 11, fontWeight: '700', color: '#1D4ED8' },
+  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 18 },
   line: { flex: 1, height: 1, backgroundColor: '#E2E8F0' },
   orText: { marginHorizontal: 12, color: '#94A3B8', fontSize: 13 },
   registerLink: { alignItems: 'center' },

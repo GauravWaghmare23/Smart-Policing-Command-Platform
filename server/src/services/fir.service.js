@@ -20,6 +20,11 @@ export const registerFIR = async (complaintId, investigatingOfficerId) => {
   
   const firNumber = generateUniqueId('FIR');
   
+  // Find all suspects already linked to this complaint
+  const Suspect = (await import('../models/Suspect.js')).default;
+  const existingSuspects = await Suspect.find({ linkedComplaintIds: complaintId });
+  const suspectIds = existingSuspects.map(s => s._id);
+
   const fir = await FIR.create({
     firNumber,
     complaintId,
@@ -28,8 +33,17 @@ export const registerFIR = async (complaintId, investigatingOfficerId) => {
     investigatingOfficerId: investigatingOfficerId,
     crimeType: complaint.crimeType,
     description: complaint.description,
+    suspectIds: suspectIds,
     status: FIR_STATUS.REGISTERED
   });
+
+  // Bi-directionally update all existing suspects to include this new FIR
+  if (suspectIds.length > 0) {
+    await Suspect.updateMany(
+      { _id: { $in: suspectIds } },
+      { $addToSet: { linkedFirIds: fir._id } }
+    );
+  }
   
   // Update complaint status to FIR_REGISTERED
   complaint.status = COMPLAINT_STATUS.FIR_REGISTERED;

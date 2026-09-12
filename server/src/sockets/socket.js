@@ -3,14 +3,15 @@ import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
 import User from '../models/User.js';
 import PoliceOfficer from '../models/PoliceOfficer.js';
+import { getRedisClient, REDIS_KEYS } from '../config/redis.js';
 
 let io = null;
 
 export const initSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: [env.clientUrl, 'http://localhost:5173', 'http://localhost:3000'],
-      methods: ['GET', 'POST'],
+      origin: [env.clientUrl, 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
+      methods: ['GET', 'POST', 'PATCH'],
       credentials: true
     }
   });
@@ -19,7 +20,7 @@ export const initSocket = (server) => {
     try {
       const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.split(' ')[1];
       if (!token) {
-        return next(); // Allow anonymous/unauthenticated socket links
+        return next(); // Anonymous/public connection
       }
 
       const decoded = jwt.verify(token, env.jwtAccessSecret);
@@ -29,14 +30,12 @@ export const initSocket = (server) => {
       }
       next();
     } catch (err) {
-      console.error('Socket authentication failed:', err.message);
-      next(); // Connect as guest
+      console.warn('Socket authentication warning:', err.message);
+      next();
     }
   });
 
   io.on('connection', (socket) => {
-    console.log(`New Socket Connection: ${socket.id}`);
-
     // Join room based on user role and ID
     if (socket.user) {
       const userId = socket.user._id.toString();
@@ -44,48 +43,63 @@ export const initSocket = (server) => {
 
       if (role === 'CONTROL_ROOM_ADMIN') {
         socket.join('control-room');
-        console.log(`Socket ${socket.id} joined room: control-room`);
       } else if (role === 'CITIZEN') {
         socket.join(`citizen:${userId}`);
-        console.log(`Socket ${socket.id} joined room: citizen:${userId}`);
       } else {
         // Police Roles (STATION_HEAD, INVESTIGATING_OFFICER, FIELD_OFFICER)
         socket.join(`officer:${userId}`);
-        console.log(`Socket ${socket.id} joined room: officer:${userId}`);
         
-        // Find station and join station room
         PoliceOfficer.findOne({ userId }).then((officer) => {
           if (officer && officer.stationId) {
             socket.join(`station:${officer.stationId}`);
-            console.log(`Socket ${socket.id} joined room: station:${officer.stationId}`);
           }
         });
       }
     }
 
-    // Handle real-time officer location updates
+    // Handle high-frequency real-time officer location updates
     socket.on('officer:location:update', async (data) => {
       if (socket.user && ['STATION_HEAD', 'INVESTIGATING_OFFICER', 'FIELD_OFFICER'].includes(socket.user.role)) {
-        const { latitude, longitude } = data;
+        const { latitude, longitude, accuracy, dutyStatus } = data;
+        const userId = socket.user._id;
+
         try {
+          const updateFields = {
+            currentLocation: { latitude, longitude },
+            lastLocationUpdate: new Date()
+          };
+          if (dutyStatus) {
+            updateFields.dutyStatus = dutyStatus;
+          }
+
           const officer = await PoliceOfficer.findOneAndUpdate(
-            { userId: socket.user._id },
-            {
-              currentLocation: { latitude, longitude },
-              lastLocationUpdate: new Date()
-            },
+            { userId },
+            { $set: updateFields },
             { new: true }
           );
           
           if (officer) {
-            // Broadcast location update to control room and station room
             const payload = {
               officerId: officer._id,
-              userId: socket.user._id,
+              userId,
               name: socket.user.name,
-              currentLocation: officer.currentLocation,
+              badgeNumber: officer.badgeNumber,
+              rank: officer.rank,
+              role: officer.role,
+              stationId: officer.stationId,
+              dutyStatus: officer.dutyStatus,
+              currentLocation: { latitude, longitude },
+              accuracy: accuracy || null,
               lastLocationUpdate: officer.lastLocationUpdate
             };
+
+            // Cache in Redis for instant retrieval
+            const redis = getRedisClient();
+            if (redis) {
+              redis.set(REDIS_KEYS.OFFICER_LOC(userId), JSON.stringify(payload), 'EX', 300);
+            }
+
+            // Broadcast to Control Room and Station
             io.to('control-room').emit('officer:location', payload);
             if (officer.stationId) {
               io.to(`station:${officer.stationId}`).emit('officer:location', payload);
@@ -97,23 +111,46 @@ export const initSocket = (server) => {
       }
     });
 
-    socket.on('disconnect', () => {
-      console.log(`Socket Disconnected: ${socket.id}`);
+    // Handle patrol real-time breadcrumb streaming
+    socket.on('patrol:location:update', async (data) => {
+      const { patrolId, latitude, longitude, accuracy } = data;
+      if (!patrolId || latitude == null || longitude == null) return;
+
+      const Patrol = (await import('../models/Patrol.js')).default;
+      try {
+        const patrol = await Patrol.findOne({ _id: patrolId });
+        if (patrol && patrol.status === 'ACTIVE') {
+          patrol.actualPath.push({ latitude, longitude, accuracy: accuracy || 0, timestamp: new Date() });
+          patrol.currentLocation = { latitude, longitude, accuracy: accuracy || 0, lastUpdate: new Date() };
+          await patrol.save();
+
+          const payload = {
+            patrolId: patrol._id,
+            patrolCode: patrol.patrolId,
+            currentLocation: patrol.currentLocation,
+            actualPath: patrol.actualPath
+          };
+
+          io.to('control-room').emit('patrol:progress', payload);
+          if (patrol.stationId) {
+            io.to(`station:${patrol.stationId}`).emit('patrol:progress', payload);
+          }
+        }
+      } catch (err) {
+        console.error('Error updating patrol stream:', err.message);
+      }
     });
+
+    socket.on('disconnect', () => {});
   });
 
   return io;
 };
 
-export const getIO = () => {
-  return io;
-};
+export const getIO = () => io;
 
 export const sendRealtimeEvent = (room, event, payload) => {
   if (io) {
     io.to(room).emit(event, payload);
-    console.log(`Emitted event ${event} to room ${room}`);
-  } else {
-    console.warn(`Socket.IO not initialized. Event ${event} skipped.`);
   }
 };

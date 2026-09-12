@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { SUSPECT_STATUS } from '../utils/constants.js';
 
 const suspectSchema = new mongoose.Schema(
   {
@@ -40,8 +41,8 @@ const suspectSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['SUSPECT', 'ACCUSED', 'CONVICTED', 'DISCHARGED'],
-      default: 'SUSPECT',
+      enum: Object.values(SUSPECT_STATUS),
+      default: SUSPECT_STATUS.SUSPECT,
       required: true
     },
     linkedComplaintIds: [
@@ -59,7 +60,7 @@ const suspectSchema = new mongoose.Schema(
     charges: [
       {
         section: String,
-        act: String, // e.g. BNS / IPC / IT Act
+        act: { type: String, default: 'BNS' }, // e.g. BNS / IPC / IT Act
         description: String
       }
     ],
@@ -70,7 +71,11 @@ const suspectSchema = new mongoose.Schema(
       custodyLocation: { type: String, default: '' }
     },
     courtOutcome: {
-      status: { type: String, enum: ['PENDING_TRIAL', 'BAIL', 'CONVICTED', 'ACQUITTED', 'DISCHARGED', 'NOT_SUBMITTED'], default: 'NOT_SUBMITTED' },
+      status: { 
+        type: String, 
+        enum: ['PENDING_TRIAL', 'BAIL', 'CONVICTED', 'ACQUITTED', 'DISCHARGED', 'NOT_SUBMITTED'], 
+        default: 'NOT_SUBMITTED' 
+      },
       caseNumber: String,
       courtName: String,
       verdictDate: Date,
@@ -91,6 +96,10 @@ const suspectSchema = new mongoose.Schema(
     timestamps: true
   }
 );
+
+suspectSchema.index({ name: 'text', alias: 'text', suspectId: 'text' });
+suspectSchema.index({ status: 1 });
+suspectSchema.index({ stationId: 1 });
 
 const Suspect = mongoose.model('Suspect', suspectSchema);
 export default Suspect;

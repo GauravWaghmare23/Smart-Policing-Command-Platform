@@ -82,29 +82,85 @@ export const updateStatus = asyncHandler(async (req, res) => {
   return ApiResponse(res, 200, 'Officer duty status updated successfully', { officer });
 });
 
+export const updateMyLocation = asyncHandler(async (req, res) => {
+  const { latitude, longitude, isSimulated } = req.body;
+  if (latitude === undefined || longitude === undefined) {
+    throw new ApiError(400, 'latitude and longitude are required');
+  }
+
+  const officerUserId = req.user._id;
+  const officer = await officerService.updateOfficerLocation(
+    officerUserId,
+    latitude,
+    longitude,
+    Boolean(isSimulated)
+  );
+
+  const officerName = officer.userId?.name || req.user.name || 'Officer';
+  const stationId = officer.stationId?._id || officer.stationId;
+
+  // Emit realtime location event
+  const locationPayload = {
+    officerId: officer._id,
+    userId: officerUserId,
+    name: officerName,
+    badgeNumber: officer.badgeNumber,
+    dutyStatus: officer.dutyStatus,
+    currentLocation: officer.currentLocation,
+    lastLocationUpdate: officer.lastLocationUpdate,
+    isSimulated: officer.currentLocation?.isSimulated || false,
+    station: officer.stationId ? {
+      _id: stationId,
+      name: officer.stationId.name,
+      stationCode: officer.stationId.stationCode
+    } : null
+  };
+
+  sendRealtimeEvent('control-room', 'officer:location', locationPayload);
+  if (stationId) {
+    sendRealtimeEvent(`station:${stationId}`, 'officer:location', locationPayload);
+  }
+
+  return ApiResponse(res, 200, 'Officer location updated successfully', { officer });
+});
+
 export const updateLocation = asyncHandler(async (req, res) => {
-  const { latitude, longitude } = req.body;
+  const { latitude, longitude, isSimulated } = req.body;
   if (latitude === undefined || longitude === undefined) {
     throw new ApiError(400, 'latitude and longitude are required');
   }
   
   const officerUserId = req.params.id;
-  const officer = await officerService.updateOfficerLocation(officerUserId, latitude, longitude);
+  const officer = await officerService.updateOfficerLocation(
+    officerUserId,
+    latitude,
+    longitude,
+    Boolean(isSimulated)
+  );
   
+  const officerName = officer.userId?.name || 'Officer';
+  const stationId = officer.stationId?._id || officer.stationId;
+
   // Emit realtime location
-  sendRealtimeEvent('control-room', 'officer:location', {
+  const locationPayload = {
     officerId: officer._id,
     userId: officerUserId,
-    currentLocation: { latitude, longitude },
-    lastLocationUpdate: officer.lastLocationUpdate
-  });
-  if (officer.stationId) {
-    sendRealtimeEvent(`station:${officer.stationId}`, 'officer:location', {
-      officerId: officer._id,
-      userId: officerUserId,
-      currentLocation: { latitude, longitude },
-      lastLocationUpdate: officer.lastLocationUpdate
-    });
+    name: officerName,
+    badgeNumber: officer.badgeNumber,
+    dutyStatus: officer.dutyStatus,
+    currentLocation: officer.currentLocation,
+    lastLocationUpdate: officer.lastLocationUpdate,
+    isSimulated: officer.currentLocation?.isSimulated || false,
+    station: officer.stationId ? {
+      _id: stationId,
+      name: officer.stationId.name,
+      stationCode: officer.stationId.stationCode
+    } : null
+  };
+
+  sendRealtimeEvent('control-room', 'officer:location', locationPayload);
+  if (stationId) {
+    sendRealtimeEvent(`station:${stationId}`, 'officer:location', locationPayload);
   }
   
   return ApiResponse(res, 200, 'Officer location updated successfully', { officer });

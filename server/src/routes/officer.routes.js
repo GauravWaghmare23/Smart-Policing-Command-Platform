@@ -16,6 +16,14 @@ router.post(
 );
 
 router.get('/', officerController.getOfficers);
+
+// Officer dynamic GPS self-update endpoint
+router.patch(
+  '/me/location',
+  validateCoordinates,
+  officerController.updateMyLocation
+);
+
 router.get('/:id', validateObjectId('id'), officerController.getOfficerById);
 router.get('/:id/full-profile', validateObjectId('id'), officerController.getOfficerFullProfile);
 

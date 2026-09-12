@@ -43,6 +43,21 @@ const policeOfficerSchema = new mongoose.Schema(
       longitude: {
         type: Number,
         default: null
+      },
+      isSimulated: {
+        type: Boolean,
+        default: false
+      }
+    },
+    locationGeo: {
+      type: {
+        type: String,
+        enum: ['Point'],
+        default: 'Point'
+      },
+      coordinates: {
+        type: [Number], // [longitude, latitude]
+        default: undefined
       }
     },
     lastLocationUpdate: {
@@ -54,6 +69,22 @@ const policeOfficerSchema = new mongoose.Schema(
     timestamps: true
   }
 );
+
+// Sync locationGeo with currentLocation
+policeOfficerSchema.pre('save', function (next) {
+  if (this.currentLocation && this.currentLocation.latitude != null && this.currentLocation.longitude != null) {
+    this.locationGeo = {
+      type: 'Point',
+      coordinates: [this.currentLocation.longitude, this.currentLocation.latitude]
+    };
+  } else {
+    this.locationGeo = undefined;
+  }
+  next();
+});
+
+policeOfficerSchema.index({ locationGeo: '2dsphere' });
+policeOfficerSchema.index({ stationId: 1, dutyStatus: 1 });
 
 const PoliceOfficer = mongoose.model('PoliceOfficer', policeOfficerSchema);
 export default PoliceOfficer;

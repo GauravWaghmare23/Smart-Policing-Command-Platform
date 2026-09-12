@@ -10,6 +10,9 @@ export default {
       // ============================================================
       // COLORS
       // ============================================================
+      // ============================================================
+      // COLORS
+      // ============================================================
       colors: {
         // Primary Blue
         primary: {
@@ -81,8 +84,18 @@ export default {
           900: "#14532D",
         },
 
-        // Existing/legacy police colors
-        // Kept so existing components do not break.
+        "primary-navy": "#123B7A",
+        "primary-blue": "#2563C7",
+        "light-blue": "#EAF2FF",
+        "background": "#F8FAFC",
+        "text-primary": "#172033",
+        "text-muted": "#64748B",
+        "border": "#D9E2EF",
+        "success-color": "#2E8B57",
+        "warning-color": "#D89D1D",
+        "danger-color": "#D92D20",
+
+        // Existing/legacy police colors (deprecated)
         police: {
           dark: "#0F172A",
           navy: "#1E293B",
@@ -92,7 +105,6 @@ export default {
           success: "#10B981",
         },
       },
-
       // ============================================================
       // TYPOGRAPHY
       // ============================================================

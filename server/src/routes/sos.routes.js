@@ -27,7 +27,7 @@ const optionalAuthenticate = async (req, res, next) => {
     }
     next();
   } catch (error) {
-    next(); // Silently fail and proceed as guest/anonymous
+    next();
   }
 };
 
@@ -46,7 +46,10 @@ router.get('/', sosController.getSOS);
 router.get('/:id', validateObjectId('id'), sosController.getSOSById);
 
 router.patch('/:id/acknowledge', validateObjectId('id'), sosController.acknowledge);
+router.patch('/:id/reject', validateObjectId('id'), sosController.reject);
 router.patch('/:id/dispatch', validateObjectId('id'), sosController.dispatch);
+router.patch('/:id/en-route', validateObjectId('id'), sosController.markEnRoute);
+router.patch('/:id/arrived', validateObjectId('id'), sosController.markArrived);
 router.patch('/:id/resolve', validateObjectId('id'), sosController.resolve);
 router.patch('/:id/escalate', validateObjectId('id'), sosController.escalate);
 

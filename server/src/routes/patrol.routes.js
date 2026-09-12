@@ -24,6 +24,13 @@ router.patch(
 );
 
 router.post(
+  '/:id/track',
+  validateObjectId('id'),
+  validateRequiredFields(['latitude', 'longitude']),
+  patrolController.addBreadcrumb
+);
+
+router.post(
   '/route',
   validateRequiredFields(['origin', 'waypoints']),
   patrolController.getRouteDirections

@@ -384,27 +384,33 @@ const ComplaintDetails = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {caseSuspects.map((s) => (
-                  <div key={s._id} className="p-3 rounded-xl bg-surface-50 border border-surface-200 text-xs space-y-1.5">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <span className="font-mono font-bold text-primary-600">{s.suspectId}</span>
-                        <h4 className="font-bold text-surface-900">{s.name} {s.alias ? `("${s.alias}")` : ''}</h4>
-                      </div>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                        s.status === 'CONVICTED' ? 'bg-red-100 text-red-700' :
-                        s.status === 'ACCUSED' ? 'bg-amber-100 text-amber-700' :
-                        s.status === 'DISCHARGED' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
-                      }`}>
-                        {s.status}
-                      </span>
-                    </div>
+                {caseSuspects.map((s) => {
+                  const cleanName = (s.name || '').replace(/^(?:Full\s*Name\s*)?(?:Alias\s*)?(?:Legal\s*Classification\s*)?/gi, '').replace(/^(?:Name|Suspect\s*Name)\s*[:\-]\s*/gi, '').trim() || s.name;
+                  const cleanAlias = (s.alias || '').replace(/^(?:Alias|Known\s*As)\s*[:\-]\s*/gi, '').trim();
 
-                    <p className="text-[11px] text-surface-600">
-                      Arrest Status: <b>{s.arrestStatus?.isArrested ? `ARRESTED (${s.arrestStatus.custodyLocation || 'Lockup'})` : 'AT LARGE'}</b>
-                    </p>
-                  </div>
-                ))}
+                  return (
+                    <div key={s._id} className="p-3 rounded-xl bg-surface-50 border border-surface-200 text-xs space-y-1.5">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="font-mono font-bold text-primary-600">{s.suspectId}</span>
+                          <h4 className="font-bold text-surface-900">{cleanName}</h4>
+                          {cleanAlias && <p className="text-[10px] text-surface-500 font-mono">Alias: "{cleanAlias}"</p>}
+                        </div>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          s.status === 'CONVICTED' ? 'bg-red-100 text-red-700' :
+                          s.status === 'ACCUSED' ? 'bg-amber-100 text-amber-700' :
+                          s.status === 'DISCHARGED' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          {s.status}
+                        </span>
+                      </div>
+
+                      <p className="text-[11px] text-surface-600">
+                        Arrest Status: <b>{s.arrestStatus?.isArrested ? `ARRESTED (${s.arrestStatus.custodyLocation || 'Lockup'})` : 'AT LARGE'}</b>
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </SectionCard>

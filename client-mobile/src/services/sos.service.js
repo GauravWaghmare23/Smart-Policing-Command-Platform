@@ -25,3 +25,21 @@ export const getSOSById = async (id) => {
   const data = res.data;
   return data?.data?.sos || data?.sos || data;
 };
+
+export const acknowledgeSOS = async (id) => {
+  if (!id || !isValidObjectId(id)) {
+    throw new Error('Invalid or missing MongoDB ObjectId for SOS');
+  }
+  const res = await apiClient.patch(`/sos/${id}/acknowledge`);
+  const data = res.data;
+  return data?.data?.sos || data?.sos || data;
+};
+
+export const rejectSOS = async (id, reason = '') => {
+  if (!id || !isValidObjectId(id)) {
+    throw new Error('Invalid or missing MongoDB ObjectId for SOS');
+  }
+  const res = await apiClient.patch(`/sos/${id}/reject`, { reason });
+  const data = res.data;
+  return data?.data?.sos || data?.sos || data;
+};

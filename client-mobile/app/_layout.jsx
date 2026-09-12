@@ -4,8 +4,10 @@ import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { SocketProvider } from '../src/context/SocketContext';
 import Loading from '../src/components/Loading';
 
+import OfficerSOSNotification from '../src/components/OfficerSOSNotification';
+
 function RootNavigator() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -22,10 +24,13 @@ function RootNavigator() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(auth)" />
-      <Stack.Screen name="(citizen)" />
-    </Stack>
+    <>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(citizen)" />
+      </Stack>
+      {user?._id && <OfficerSOSNotification currentUserId={user._id} />}
+    </>
   );
 }
 

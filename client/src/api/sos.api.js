@@ -17,16 +17,31 @@ export const sosApi = {
     const res = await api.patch(`/sos/${id}/acknowledge`);
     return res.data;
   },
-  dispatch: async (id, officerUserId) => {
-    const res = await api.patch(`/sos/${id}/dispatch`, { officerUserId });
+  reject: async (id, reason) => {
+    const res = await api.patch(`/sos/${id}/reject`, { reason });
     return res.data;
   },
-  resolve: async (id) => {
-    const res = await api.patch(`/sos/${id}/resolve`);
+  dispatch: async (id, payload) => {
+    const body = typeof payload === 'string'
+      ? { officerUserId: payload }
+      : (payload || {});
+    const res = await api.patch(`/sos/${id}/dispatch`, body);
     return res.data;
   },
-  escalate: async (id) => {
-    const res = await api.patch(`/sos/${id}/escalate`);
+  markEnRoute: async (id) => {
+    const res = await api.patch(`/sos/${id}/en-route`);
+    return res.data;
+  },
+  markArrived: async (id) => {
+    const res = await api.patch(`/sos/${id}/arrived`);
+    return res.data;
+  },
+  resolve: async (id, summary) => {
+    const res = await api.patch(`/sos/${id}/resolve`, { summary });
+    return res.data;
+  },
+  escalate: async (id, reason) => {
+    const res = await api.patch(`/sos/${id}/escalate`, { reason });
     return res.data;
   }
 };
