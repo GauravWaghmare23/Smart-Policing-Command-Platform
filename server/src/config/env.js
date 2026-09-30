@@ -6,10 +6,9 @@ dotenv.config();
 export const env = {
   nodeEnv: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT || '8000', 10),
-  mongodbUri: process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/smart_police',
+  mongodbUri: process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/smart-police-station',
   redisUrl: process.env.REDIS_URL || 'redis://127.0.0.1:6379',
   rabbitmqUrl: process.env.RABBITMQ_URL || 'amqp://127.0.0.1:5672',
-  
   jwtAccessSecret: process.env.JWT_ACCESS_SECRET || 'change_me_access_secret_key_123!',
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || 'change_me_refresh_secret_key_123!',
   jwtAccessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
